@@ -118,7 +118,8 @@
       query,
       where,
       orderBy,
-      Timestamp
+      Timestamp,
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import {
       getStorage,
@@ -258,7 +259,8 @@
       }
     }
 
-    async function renderPostsMes(year, month) {
+    // Reemplazada para usar onSnapshot y actualizar en tiempo real
+    function renderPostsMes(year, month) {
       currentYear = year;
       currentMonth = month;
 
@@ -279,16 +281,18 @@
       document.getElementById("addPostBtn").onclick = () => renderFormPost(year, month);
 
       const postsContainer = document.getElementById("postsContainer");
-      try {
-        const start = new Date(year, month-1, 1);
-        const end = new Date(year, month, 1);
-        const postsRef = collection(db, "posts");
-        const q = query(postsRef,
-          where("date", ">=", Timestamp.fromDate(start)),
-          where("date", "<", Timestamp.fromDate(end)),
-          orderBy("date", "asc")
-        );
-        const snapshot = await getDocs(q);
+
+      const start = new Date(year, month-1, 1);
+      const end = new Date(year, month, 1);
+      const postsRef = collection(db, "posts");
+      const q = query(postsRef,
+        where("date", ">=", Timestamp.fromDate(start)),
+        where("date", "<", Timestamp.fromDate(end)),
+        orderBy("date", "asc")
+      );
+
+      // Escucha en tiempo real
+      onSnapshot(q, (snapshot) => {
         postsContainer.innerHTML = "";
         if (snapshot.empty) {
           postsContainer.textContent = "No posts for this month.";
@@ -307,140 +311,147 @@
             </div>
           `;
         });
-      } catch (e) {
-        postsContainer.textContent = "Error loading posts: " + e.message;
-      }
+      }, (error) => {
+        postsContainer.textContent = "Error loading posts: " + error.message;
+      });
+    }
+
+    function monthName(month) {
+      return [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ][month-1];
+    }
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text.replace(/[&<>"']/g, function(m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
     }
 
     function renderFormPost(year, month) {
       root.innerHTML = `
         <header>
-          <h1>Add post ${monthName(month)} ${year}</h1>
-          <button id="backBtn" class="btn-secondary">← Back to Month</button>
+          <h1>Add Post for ${monthName(month)} ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Back to Posts</button>
         </header>
         <form id="postForm">
-          <label>Text:</label>
-          <textarea id="postText" rows="4" placeholder="Write your post here" required></textarea>
+          <label>Text</label>
+          <textarea id="postText" required></textarea>
 
-          <label>Upload photo (optional):</label><br/>
+          <label>Image (optional)</label>
           <input type="file" id="postImage" accept="image/*" />
 
-          <label>Upload video (optional):</label><br/>
-          <input type="file" id="postVideo" accept="video/*" />
+          <label>Video URL (optional)</label>
+          <input type="text" id="postVideo" placeholder="https://example.com/video.mp4" />
 
-          <label>Event day:</label>
-          <input type="number" id="postDay" min="1" max="31" value="1" required />
-
-          <button type="submit">Save post</button>
+          <button type="submit">Add Post</button>
         </form>
-        <div id="message" class="message"></div>
+        <div id="formMessage"></div>
       `;
 
       document.getElementById("backBtn").onclick = () => renderPostsMes(year, month);
 
-      const form = document.getElementById("postForm");
-      form.onsubmit = async (e) => {
+      document.getElementById("postForm").onsubmit = async (e) => {
         e.preventDefault();
-        const msg = document.getElementById("message");
-        msg.textContent = "";
         const text = document.getElementById("postText").value.trim();
-        const day = parseInt(document.getElementById("postDay").value);
         const imageFile = document.getElementById("postImage").files[0];
-        const videoFile = document.getElementById("postVideo").files[0];
+        const videoUrl = document.getElementById("postVideo").value.trim();
 
         if (!text) {
-          msg.style.color = "#8b0000";
-          msg.textContent = "Text is required";
-          return;
-        }
-        if (day < 1 || day > 31) {
-          msg.style.color = "#8b0000";
-          msg.textContent = "Invalid day";
+          alert("Text is required");
           return;
         }
 
-        msg.style.color = "#8b0000";
-        msg.textContent = "Uploading post...";
+        const formMessage = document.getElementById("formMessage");
+        formMessage.textContent = "Uploading...";
 
         try {
           let imageUrl = "";
           if (imageFile) {
-            const imageRef = ref(storage, `post_images/${Date.now()}_${imageFile.name}`);
-            const snapshot = await uploadBytes(imageRef, imageFile);
-            imageUrl = await getDownloadURL(snapshot.ref);
+            const imageRef = ref(storage, `posts/${Date.now()}_${imageFile.name}`);
+            await uploadBytes(imageRef, imageFile);
+            imageUrl = await getDownloadURL(imageRef);
           }
 
-          let videoUrl = "";
-          if (videoFile) {
-            const videoRef = ref(storage, `post_videos/${Date.now()}_${videoFile.name}`);
-            const snapshot = await uploadBytes(videoRef, videoFile);
-            videoUrl = await getDownloadURL(snapshot.ref);
-          }
-
-          const postDate = new Date(year, month-1, day);
-
+          const date = new Date(year, month-1, 1);
           await addDoc(collection(db, "posts"), {
-            author: currentUser.email,
             text,
-            date: Timestamp.fromDate(postDate),
             imageUrl,
-            videoUrl
+            videoUrl,
+            author: currentUser.email,
+            date: Timestamp.fromDate(date)
           });
 
-          msg.style.color = "green";
-          msg.textContent = "Post successfully added.";
+          formMessage.textContent = "Post added successfully!";
           setTimeout(() => renderPostsMes(year, month), 1500);
-
-        } catch (e) {
-          msg.style.color = "#8b0000";
-          msg.textContent = "Error creating post: " + e.message;
+        } catch (error) {
+          formMessage.textContent = "Error: " + error.message;
         }
       };
     }
 
     async function buscarPorFecha() {
-      const year = parseInt(document.getElementById("searchYear").value);
-      if (!year) {
-        alert("Enter at least the year to search");
+      const yearInput = document.getElementById("searchYear").value;
+      const monthInput = document.getElementById("searchMonth").value;
+      const dayInput = document.getElementById("searchDay").value;
+      const searchResults = document.getElementById("searchResults");
+
+      if (!yearInput) {
+        alert("Please enter a year");
         return;
       }
-      const month = parseInt(document.getElementById("searchMonth").value);
-      const day = parseInt(document.getElementById("searchDay").value);
 
-      let startDate, endDate;
-      if (year && month && day) {
-        startDate = new Date(year, month-1, day);
-        endDate = new Date(year, month-1, day + 1);
-      } else if (year && month) {
-        startDate = new Date(year, month-1, 1);
-        endDate = new Date(year, month, 1);
-      } else {
-        startDate = new Date(year, 0, 1);
-        endDate = new Date(year +1, 0, 1);
-      }
-
-      const postsContainer = document.getElementById("searchResults");
-      postsContainer.innerHTML = "Searching posts...";
+      searchResults.innerHTML = "Searching...";
 
       try {
+        let q = collection(db, "posts");
+        const year = parseInt(yearInput);
+
+        let start, end;
+        if (monthInput) {
+          const month = parseInt(monthInput);
+          if (dayInput) {
+            const day = parseInt(dayInput);
+            start = new Date(year, month-1, day);
+            end = new Date(year, month-1, day + 1);
+          } else {
+            start = new Date(year, month-1, 1);
+            end = new Date(year, month, 1);
+          }
+        } else {
+          start = new Date(year, 0, 1);
+          end = new Date(year + 1, 0, 1);
+        }
+
         const postsRef = collection(db, "posts");
-        const q = query(postsRef,
-          where("date", ">=", Timestamp.fromDate(startDate)),
-          where("date", "<", Timestamp.fromDate(endDate)),
+        const postsQuery = query(postsRef,
+          where("date", ">=", Timestamp.fromDate(start)),
+          where("date", "<", Timestamp.fromDate(end)),
           orderBy("date", "asc")
         );
-        const snapshot = await getDocs(q);
+
+        const snapshot = await getDocs(postsQuery);
+
         if (snapshot.empty) {
-          postsContainer.textContent = "No posts found for that date.";
+          searchResults.textContent = "No posts found for that date.";
           return;
         }
-        postsContainer.innerHTML = "";
+
+        searchResults.innerHTML = "";
         snapshot.forEach(doc => {
           const p = doc.data();
           const date = p.date.toDate();
-          postsContainer.innerHTML += `
+          searchResults.innerHTML += `
             <div class="post">
-              <strong>${date.getDate()} ${monthName(date.getMonth()+1)} ${date.getFullYear()}</strong><br/>
+              <strong>${date.toDateString()}</strong><br/>
               <p>${escapeHtml(p.text)}</p>
               ${p.imageUrl ? `<img src="${p.imageUrl}" alt="image"/>` : ""}
               ${p.videoUrl ? `<video src="${p.videoUrl}" controls></video>` : ""}
@@ -448,24 +459,12 @@
             </div>
           `;
         });
-      } catch(e) {
-        postsContainer.textContent = "Error searching posts: " + e.message;
+      } catch (error) {
+        searchResults.textContent = "Error searching posts: " + error.message;
       }
     }
 
-    function monthName(m) {
-      const months = ["January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"];
-      return months[m-1] || "Invalid month";
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if (user) {
         renderInicio();
