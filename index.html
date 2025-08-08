@@ -1,187 +1,487 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scout Adventures Volunteers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voluntarios Scout Adventures</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      background: #ffe5e5;
+      background: #fff5f5;
+      color: #8b0000; /* rojo oscuro */
     }
     .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header, .section {
+      max-width: 700px;
+      margin: 30px auto;
       background: white;
-      border-radius: 10px;
-      margin-bottom: 20px;
       padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(139,0,0,0.2);
+      border: 1px solid #8b0000;
     }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 15px;
-      font-size: 16px;
+    h1, h2 {
+      margin-top: 0;
+      color: #b22222; /* rojo fuego */
     }
     button {
-      background: #b00020;
+      background-color: #b22222;
       color: white;
       border: none;
+      padding: 10px 14px;
       border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      user-select: none;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
     }
     button:hover {
-      background: #7f0015;
+      background-color: #8b0000;
     }
-    .nav-buttons {
+    .btn-secondary {
+      background-color: #f08080;
+      color: #8b0000;
+    }
+    .btn-secondary:hover {
+      background-color: #cd5c5c;
+      color: white;
+    }
+    input[type="text"], textarea, select, input[type="date"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px 0;
+      border-radius: 5px;
+      border: 1px solid #b22222;
+      box-sizing: border-box;
+      font-family: sans-serif;
+      font-size: 14px;
+      color: #8b0000;
+      background: #fff0f0;
+    }
+    input[type="file"] {
+      margin: 6px 0 20px 0;
+      display: block;
+      color: #8b0000;
+    }
+    #searchForm {
+      margin-bottom: 20px;
       display: flex;
+      gap: 8px;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
     }
-    .nav-buttons button {
-      flex: 1 1 45%;
+    #searchForm input, #searchForm button, #searchForm select {
+      flex: 1 1 auto;
+      min-width: 120px;
+      color: #8b0000;
+      background: #fff0f0;
+      border: 1px solid #b22222;
     }
     .post {
-      background: #fff3f3;
-      border-left: 5px solid #b00020;
-      padding: 10px;
-      margin-top: 10px;
+      border: 1px solid #b22222;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background: #ffe5e5;
     }
     .post img, .post video {
       max-width: 100%;
       margin-top: 10px;
+      border-radius: 4px;
+    }
+    .message {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #b22222;
     }
   </style>
 </head>
 <body>
-  <div id="root" class="container"></div>
+  <div class="container" id="root">
+    <!-- Aquí se carga todo -->
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import {
-      getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      signOut
     } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, getDocs, query, orderBy
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      orderBy,
+      Timestamp
     } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+       apiKey: "AIzaSyDd5imbrEvLcByokkT__Xyz3PBHLEEChQ8",
+  authDomain: "sa-youlboury-volunteers.firebaseapp.com",
+  projectId: "sa-youlboury-volunteers",
+  storageBucket: "sa-youlboury-volunteers.firebasestorage.app",
+  messagingSenderId: "400363651786",
+  appId: "1:400363651786:web:70e3f9830555e03272ea33"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
     const root = document.getElementById("root");
 
+    let currentUser = null;
+
+    // Estados para navegación:
+    let currentYear = null;
+    let currentMonth = null; // número 1-12
+
+    // --- Funciones de render ---
+
+    // --- Login simple ---
     function renderLogin() {
-      root.innerHTML = `
-        <header>
-          <h2>Login</h2>
-          <input type="email" id="email" placeholder="Email" />
-          <input type="password" id="password" placeholder="Password" />
-          <button id="loginBtn">Log in</button>
-        </header>
-      `;
+      root.innerHTML = 
+        <h2>Iniciar sesión</h2>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Contraseña" />
+        <button id="loginBtn">Entrar</button>
+      ;
       document.getElementById("loginBtn").onclick = async () => {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
         try {
           await signInWithEmailAndPassword(auth, email, password);
-        } catch (err) {
-          alert("Login failed: " + err.message);
+        } catch (e) {
+          alert("Error al iniciar sesión: " + e.message);
         }
       };
     }
 
-    function renderHome(user) {
-      root.innerHTML = `
+    // --- Pantalla Inicio con años y búsqueda ---
+    function renderInicio() {
+      currentYear = null;
+      currentMonth = null;
+      root.innerHTML = 
         <header>
-          <h2>Welcome, ${user.email}</h2>
-          <button id="logoutBtn">Log out</button>
-        </header>
-        <div class="section">
-          <h3>Years</h3>
-          <div class="nav-buttons">
-            <button onclick="selectYear(2023)">2023</button>
-            <button onclick="selectYear(2024)">2024</button>
-            <button onclick="selectYear(2025)">2025</button>
-            <button onclick="alert('Add year coming soon')">+ Add Year</button>
+          <h1>Voluntarios Scout Adventures</h1>
+          <div>
+            Bienvenido, ${currentUser.email}
+            <button id="logoutBtn">Cerrar sesión</button>
           </div>
-        </div>
-      `;
+        </header>
+
+        <section>
+          <h2>Buscar publicaciones por fecha</h2>
+          <form id="searchForm">
+            <input type="number" id="searchYear" placeholder="Año (ej. 2023)" min="2000" max="2100" />
+            <select id="searchMonth">
+              <option value="">Mes (opcional)</option>
+              ${Array.from({length: 12}, (_, i) => <option value="${i+1}">${monthName(i+1)}</option>).join("")}
+            </select>
+            <input type="number" id="searchDay" placeholder="Día (opcional)" min="1" max="31" />
+            <button type="submit">Buscar</button>
+          </form>
+          <div id="searchResults"></div>
+        </section>
+
+        <section>
+          <h2>Años</h2>
+          <div id="yearsContainer"></div>
+          <button id="addYearBtn" class="btn-secondary">Agregar Año</button>
+        </section>
+
+        <div id="message" class="message"></div>
+      ;
+
       document.getElementById("logoutBtn").onclick = async () => {
         await signOut(auth);
       };
+
+      document.getElementById("addYearBtn").onclick = () => {
+        const y = prompt("Ingresa el nuevo año (ej. 2026):");
+        if (!y || isNaN(y) || y < 2000 || y > 2100) {
+          alert("Año inválido");
+          return;
+        }
+        renderMeses(parseInt(y));
+      };
+
+      document.getElementById("searchForm").onsubmit = async (e) => {
+        e.preventDefault();
+        await buscarPorFecha();
+      };
+
+      cargarAnios();
     }
 
-    window.selectYear = (year) => {
-      root.innerHTML = `
-        <header>
-          <h2>Year ${year}</h2>
-          <button onclick="renderHome(auth.currentUser)">← Back</button>
-        </header>
-        <div class="section">
-          <h3>Months</h3>
-          <div class="nav-buttons">
-            ${[...Array(12)].map((_, i) => {
-              const month = i + 1;
-              return `<button onclick="selectMonth(${year}, ${month})">${month.toString().padStart(2, '0')}</button>`;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    };
+    // --- Carga años que existen (ej: 2023, 2024, 2025) con botón ---
+    async function cargarAnios() {
+      const yearsContainer = document.getElementById("yearsContainer");
+      yearsContainer.innerHTML = "";
+      const years = [2023, 2024, 2025];
+      years.forEach(y => {
+        const btn = document.createElement("button");
+        btn.textContent = y;
+        btn.onclick = () => renderMeses(y);
+        yearsContainer.appendChild(btn);
+      });
+    }
 
-    window.selectMonth = (year, month) => {
-      const monthStr = month.toString().padStart(2, '0');
-      root.innerHTML = `
-        <header>
-          <h2>${year} - ${monthStr}</h2>
-          <button onclick="selectYear(${year})">← Back</button>
-        </header>
-        <div class="section">
-          <h3>Add Post</h3>
-          <input type="date" id="eventDay" />
-          <textarea id="text" placeholder="Write your message..."></textarea>
-          <input type="file" id="photo" accept="image/*" />
-          <input type="file" id="video" accept="video/*" />
-          <button onclick="submitPost(${year}, ${month})">Post</button>
-        </div>
-        <div class="section" id="postContainer">
-          <h3>Posts</h3>
-          <!-- Posts will load here -->
-        </div>
-      `;
-    };
+    // --- Pantalla meses ---
+    function renderMeses(year) {
+      currentYear = year;
+      currentMonth = null;
 
-    window.submitPost = async (year, month) => {
-      const text = document.getElementById("text").value;
-      const eventDay = document.getElementById("eventDay").value;
-      const post = {
-        year, month,
-        text, eventDay,
-        author: auth.currentUser.email,
-        date: new Date().toISOString()
+      root.innerHTML = 
+        <header>
+          <h1>Año ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Volver al Inicio</button>
+        </header>
+        <section>
+          <h2>Meses</h2>
+          <div id="monthsContainer"></div>
+        </section>
+      ;
+
+      document.getElementById("backBtn").onclick = () => renderInicio();
+
+      const monthsContainer = document.getElementById("monthsContainer");
+      for (let m=1; m<=12; m++) {
+        const btn = document.createElement("button");
+        btn.textContent = monthName(m);
+        btn.onclick = () => renderPostsMes(year, m);
+        monthsContainer.appendChild(btn);
+      }
+    }
+
+    // --- Pantalla posts del mes ---
+    async function renderPostsMes(year, month) {
+      currentYear = year;
+      currentMonth = month;
+
+      root.innerHTML = 
+        <header>
+          <h1>Publicaciones de ${monthName(month)} ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Volver al Año</button>
+        </header>
+        <section>
+          <button id="addPostBtn">Agregar publicación</button>
+        </section>
+        <section id="postsContainer">
+          <p>Cargando publicaciones...</p>
+        </section>
+      ;
+
+      document.getElementById("backBtn").onclick = () => renderMeses(year);
+      document.getElementById("addPostBtn").onclick = () => renderFormPost(year, month);
+
+      const postsContainer = document.getElementById("postsContainer");
+      try {
+        const start = new Date(year, month-1, 1);
+        const end = new Date(year, month, 1);
+        const postsRef = collection(db, "posts");
+        const q = query(postsRef,
+          where("date", ">=", Timestamp.fromDate(start)),
+          where("date", "<", Timestamp.fromDate(end)),
+          orderBy("date", "asc")
+        );
+        const snapshot = await getDocs(q);
+        postsContainer.innerHTML = "";
+        if (snapshot.empty) {
+          postsContainer.textContent = "No hay publicaciones para este mes.";
+          return;
+        }
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          const date = p.date.toDate();
+          postsContainer.innerHTML += 
+            <div class="post">
+              <strong>${date.getDate()} de ${monthName(month)}</strong><br/>
+              <p>${escapeHtml(p.text)}</p>
+              ${p.imageUrl ? <img src="${p.imageUrl}" alt="imagen"/> : ""}
+              ${p.videoUrl ? <video src="${p.videoUrl}" controls></video> : ""}
+              <small>Publicado por: ${escapeHtml(p.author)}</small>
+            </div>
+          ;
+        });
+      } catch (e) {
+        postsContainer.textContent = "Error cargando publicaciones: " + e.message;
+      }
+    }
+
+    // --- Formulario para agregar post ---
+    function renderFormPost(year, month) {
+      root.innerHTML = 
+        <header>
+          <h1>Agregar publicación ${monthName(month)} ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Volver al Mes</button>
+        </header>
+        <form id="postForm">
+          <label>Texto:</label>
+          <textarea id="postText" rows="4" placeholder="Escribe aquí tu publicación" required></textarea>
+
+          <label>Subir foto (opcional):</label><br/>
+          <input type="file" id="postImage" accept="image/*" />
+
+          <label>Subir video (opcional):</label><br/>
+          <input type="file" id="postVideo" accept="video/*" />
+
+          <label>Día del evento:</label>
+          <input type="number" id="postDay" min="1" max="31" value="1" required />
+
+          <button type="submit">Guardar publicación</button>
+        </form>
+        <div id="message" class="message"></div>
+      ;
+
+      document.getElementById("backBtn").onclick = () => renderPostsMes(year, month);
+
+      const form = document.getElementById("postForm");
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("message");
+        msg.textContent = "";
+        const text = document.getElementById("postText").value.trim();
+        const day = parseInt(document.getElementById("postDay").value);
+        const imageFile = document.getElementById("postImage").files[0];
+        const videoFile = document.getElementById("postVideo").files[0];
+
+        if (!text) {
+          msg.style.color = "#8b0000";
+          msg.textContent = "El texto es obligatorio";
+          return;
+        }
+        if (day < 1 || day > 31) {
+          msg.style.color = "#8b0000";
+          msg.textContent = "Día inválido";
+          return;
+        }
+
+        msg.style.color = "#8b0000";
+        msg.textContent = "Subiendo publicación...";
+
+        try {
+          let imageUrl = "";
+          if (imageFile) {
+            const imageRef = ref(storage, post_images/${Date.now()}_${imageFile.name});
+            const snapshot = await uploadBytes(imageRef, imageFile);
+            imageUrl = await getDownloadURL(snapshot.ref);
+          }
+
+          let videoUrl = "";
+          if (videoFile) {
+            const videoRef = ref(storage, post_videos/${Date.now()}_${videoFile.name});
+            const snapshot = await uploadBytes(videoRef, videoFile);
+            videoUrl = await getDownloadURL(snapshot.ref);
+          }
+
+          const postDate = new Date(year, month-1, day);
+
+          await addDoc(collection(db, "posts"), {
+            author: currentUser.email,
+            text,
+            date: Timestamp.fromDate(postDate),
+            imageUrl,
+            videoUrl
+          });
+
+          msg.style.color = "green";
+          msg.textContent = "Publicación agregada con éxito.";
+          setTimeout(() => renderPostsMes(year, month), 1500);
+
+        } catch (e) {
+          msg.style.color = "#8b0000";
+          msg.textContent = "Error al crear publicación: " + e.message;
+        }
       };
-      await addDoc(collection(db, "posts"), post);
-      alert("Post added!");
-      selectMonth(year, month);
-    };
+    }
 
+    // --- Buscar por fecha desde inicio ---
+    async function buscarPorFecha() {
+      const year = parseInt(document.getElementById("searchYear").value);
+      if (!year) {
+        alert("Ingresa al menos el año para buscar");
+        return;
+      }
+      const month = parseInt(document.getElementById("searchMonth").value);
+      const day = parseInt(document.getElementById("searchDay").value);
+
+      let startDate, endDate;
+      if (year && month && day) {
+        startDate = new Date(year, month-1, day);
+        endDate = new Date(year, month-1, day + 1);
+      } else if (year && month) {
+        startDate = new Date(year, month-1, 1);
+        endDate = new Date(year, month, 1);
+      } else {
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year +1, 0, 1);
+      }
+
+      const postsContainer = document.getElementById("searchResults");
+      postsContainer.innerHTML = "Buscando publicaciones...";
+
+      try {
+        const postsRef = collection(db, "posts");
+        const q = query(postsRef,
+          where("date", ">=", Timestamp.fromDate(startDate)),
+          where("date", "<", Timestamp.fromDate(endDate)),
+          orderBy("date", "asc")
+        );
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          postsContainer.textContent = "No se encontraron publicaciones para esa fecha.";
+          return;
+        }
+        postsContainer.innerHTML = "";
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          const date = p.date.toDate();
+          postsContainer.innerHTML += 
+            <div class="post">
+              <strong>${date.getDate()} de ${monthName(date.getMonth()+1)} de ${date.getFullYear()}</strong><br/>
+              <p>${escapeHtml(p.text)}</p>
+              ${p.imageUrl ? <img src="${p.imageUrl}" alt="imagen"/> : ""}
+              ${p.videoUrl ? <video src="${p.videoUrl}" controls></video> : ""}
+              <small>Publicado por: ${escapeHtml(p.author)}</small>
+            </div>
+          ;
+        });
+      } catch(e) {
+        postsContainer.textContent = "Error buscando publicaciones: " + e.message;
+      }
+    }
+
+    // --- Utils ---
+    function monthName(m) {
+      const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      return months[m-1] || "Mes inválido";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- Controlar estado de login ---
     onAuthStateChanged(auth, user => {
+      currentUser = user;
       if (user) {
-        renderHome(user);
+        renderInicio();
       } else {
         renderLogin();
       }
