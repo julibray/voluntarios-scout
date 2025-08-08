@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Voluntarios Scout Adventures</title>
+  <title>Scout Adventures Volunteers</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
       background: #fff5f5;
-      color: #8b0000; /* rojo oscuro */
+      color: #8b0000; /* dark red */
     }
     .container {
       max-width: 700px;
@@ -22,7 +22,7 @@
     }
     h1, h2 {
       margin-top: 0;
-      color: #b22222; /* rojo fuego */
+      color: #b22222; /* fire red */
     }
     button {
       background-color: #b22222;
@@ -99,7 +99,7 @@
 </head>
 <body>
   <div class="container" id="root">
-    <!-- Aquí se carga todo -->
+    <!-- Content loads here -->
   </div>
 
   <script type="module">
@@ -129,11 +129,11 @@
 
     const firebaseConfig = {
        apiKey: "AIzaSyDd5imbrEvLcByokkT__Xyz3PBHLEEChQ8",
-  authDomain: "sa-youlboury-volunteers.firebaseapp.com",
-  projectId: "sa-youlboury-volunteers",
-  storageBucket: "sa-youlboury-volunteers.firebasestorage.app",
-  messagingSenderId: "400363651786",
-  appId: "1:400363651786:web:70e3f9830555e03272ea33"
+       authDomain: "sa-youlboury-volunteers.firebaseapp.com",
+       projectId: "sa-youlboury-volunteers",
+       storageBucket: "sa-youlboury-volunteers.firebasestorage.app",
+       messagingSenderId: "400363651786",
+       appId: "1:400363651786:web:70e3f9830555e03272ea33"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -143,76 +143,70 @@
     const root = document.getElementById("root");
 
     let currentUser = null;
-
-    // Estados para navegación:
     let currentYear = null;
-    let currentMonth = null; // número 1-12
+    let currentMonth = null;
 
-    // --- Funciones de render ---
-
-    // --- Login simple ---
     function renderLogin() {
-      root.innerHTML = 
-        <h2>Iniciar sesión</h2>
+      root.innerHTML = `
+        <h2>Log in</h2>
         <input type="email" id="email" placeholder="Email" />
-        <input type="password" id="password" placeholder="Contraseña" />
-        <button id="loginBtn">Entrar</button>
-      ;
+        <input type="password" id="password" placeholder="Password" />
+        <button id="loginBtn">Sign in</button>
+      `;
       document.getElementById("loginBtn").onclick = async () => {
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
         try {
           await signInWithEmailAndPassword(auth, email, password);
         } catch (e) {
-          alert("Error al iniciar sesión: " + e.message);
+          alert("Login error: " + e.message);
         }
       };
     }
 
-    // --- Pantalla Inicio con años y búsqueda ---
     function renderInicio() {
       currentYear = null;
       currentMonth = null;
-      root.innerHTML = 
+      root.innerHTML = `
         <header>
-          <h1>Voluntarios Scout Adventures</h1>
+          <h1>Scout Adventures Volunteers</h1>
           <div>
-            Bienvenido, ${currentUser.email}
-            <button id="logoutBtn">Cerrar sesión</button>
+            Welcome, ${currentUser.email}
+            <button id="logoutBtn">Log out</button>
           </div>
         </header>
 
         <section>
-          <h2>Buscar publicaciones por fecha</h2>
+          <h2>Search posts by date</h2>
           <form id="searchForm">
-            <input type="number" id="searchYear" placeholder="Año (ej. 2023)" min="2000" max="2100" />
+            <input type="number" id="searchYear" placeholder="Year (e.g. 2023)" min="2000" max="2100" />
             <select id="searchMonth">
-              <option value="">Mes (opcional)</option>
-              ${Array.from({length: 12}, (_, i) => <option value="${i+1}">${monthName(i+1)}</option>).join("")}
+              <option value="">Month (optional)</option>
+              ${Array.from({length: 12}, (_, i) => `<option value="${i+1}">${monthName(i+1)}</option>`).join("")}
             </select>
-            <input type="number" id="searchDay" placeholder="Día (opcional)" min="1" max="31" />
-            <button type="submit">Buscar</button>
+            <input type="number" id="searchDay" placeholder="Day (optional)" min="1" max="31" />
+            <button type="submit">Search</button>
           </form>
           <div id="searchResults"></div>
         </section>
 
         <section>
-          <h2>Años</h2>
+          <h2>Years</h2>
           <div id="yearsContainer"></div>
-          <button id="addYearBtn" class="btn-secondary">Agregar Año</button>
+          <button id="addYearBtn" class="btn-secondary">Add Year</button>
         </section>
 
         <div id="message" class="message"></div>
-      ;
+      `;
 
       document.getElementById("logoutBtn").onclick = async () => {
         await signOut(auth);
       };
 
       document.getElementById("addYearBtn").onclick = () => {
-        const y = prompt("Ingresa el nuevo año (ej. 2026):");
+        const y = prompt("Enter the new year (e.g. 2026):");
         if (!y || isNaN(y) || y < 2000 || y > 2100) {
-          alert("Año inválido");
+          alert("Invalid year");
           return;
         }
         renderMeses(parseInt(y));
@@ -226,7 +220,6 @@
       cargarAnios();
     }
 
-    // --- Carga años que existen (ej: 2023, 2024, 2025) con botón ---
     async function cargarAnios() {
       const yearsContainer = document.getElementById("yearsContainer");
       yearsContainer.innerHTML = "";
@@ -239,21 +232,20 @@
       });
     }
 
-    // --- Pantalla meses ---
     function renderMeses(year) {
       currentYear = year;
       currentMonth = null;
 
-      root.innerHTML = 
+      root.innerHTML = `
         <header>
-          <h1>Año ${year}</h1>
-          <button id="backBtn" class="btn-secondary">← Volver al Inicio</button>
+          <h1>Year ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Back to Home</button>
         </header>
         <section>
-          <h2>Meses</h2>
+          <h2>Months</h2>
           <div id="monthsContainer"></div>
         </section>
-      ;
+      `;
 
       document.getElementById("backBtn").onclick = () => renderInicio();
 
@@ -266,23 +258,22 @@
       }
     }
 
-    // --- Pantalla posts del mes ---
     async function renderPostsMes(year, month) {
       currentYear = year;
       currentMonth = month;
 
-      root.innerHTML = 
+      root.innerHTML = `
         <header>
-          <h1>Publicaciones de ${monthName(month)} ${year}</h1>
-          <button id="backBtn" class="btn-secondary">← Volver al Año</button>
+          <h1>Posts from ${monthName(month)} ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Back to Year</button>
         </header>
         <section>
-          <button id="addPostBtn">Agregar publicación</button>
+          <button id="addPostBtn">Add post</button>
         </section>
         <section id="postsContainer">
-          <p>Cargando publicaciones...</p>
+          <p>Loading posts...</p>
         </section>
-      ;
+      `;
 
       document.getElementById("backBtn").onclick = () => renderMeses(year);
       document.getElementById("addPostBtn").onclick = () => renderFormPost(year, month);
@@ -300,51 +291,50 @@
         const snapshot = await getDocs(q);
         postsContainer.innerHTML = "";
         if (snapshot.empty) {
-          postsContainer.textContent = "No hay publicaciones para este mes.";
+          postsContainer.textContent = "No posts for this month.";
           return;
         }
         snapshot.forEach(doc => {
           const p = doc.data();
           const date = p.date.toDate();
-          postsContainer.innerHTML += 
+          postsContainer.innerHTML += `
             <div class="post">
-              <strong>${date.getDate()} de ${monthName(month)}</strong><br/>
+              <strong>${date.getDate()} ${monthName(month)}</strong><br/>
               <p>${escapeHtml(p.text)}</p>
-              ${p.imageUrl ? <img src="${p.imageUrl}" alt="imagen"/> : ""}
-              ${p.videoUrl ? <video src="${p.videoUrl}" controls></video> : ""}
-              <small>Publicado por: ${escapeHtml(p.author)}</small>
+              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="image"/>` : ""}
+              ${p.videoUrl ? `<video src="${p.videoUrl}" controls></video>` : ""}
+              <small>Posted by: ${escapeHtml(p.author)}</small>
             </div>
-          ;
+          `;
         });
       } catch (e) {
-        postsContainer.textContent = "Error cargando publicaciones: " + e.message;
+        postsContainer.textContent = "Error loading posts: " + e.message;
       }
     }
 
-    // --- Formulario para agregar post ---
     function renderFormPost(year, month) {
-      root.innerHTML = 
+      root.innerHTML = `
         <header>
-          <h1>Agregar publicación ${monthName(month)} ${year}</h1>
-          <button id="backBtn" class="btn-secondary">← Volver al Mes</button>
+          <h1>Add post ${monthName(month)} ${year}</h1>
+          <button id="backBtn" class="btn-secondary">← Back to Month</button>
         </header>
         <form id="postForm">
-          <label>Texto:</label>
-          <textarea id="postText" rows="4" placeholder="Escribe aquí tu publicación" required></textarea>
+          <label>Text:</label>
+          <textarea id="postText" rows="4" placeholder="Write your post here" required></textarea>
 
-          <label>Subir foto (opcional):</label><br/>
+          <label>Upload photo (optional):</label><br/>
           <input type="file" id="postImage" accept="image/*" />
 
-          <label>Subir video (opcional):</label><br/>
+          <label>Upload video (optional):</label><br/>
           <input type="file" id="postVideo" accept="video/*" />
 
-          <label>Día del evento:</label>
+          <label>Event day:</label>
           <input type="number" id="postDay" min="1" max="31" value="1" required />
 
-          <button type="submit">Guardar publicación</button>
+          <button type="submit">Save post</button>
         </form>
         <div id="message" class="message"></div>
-      ;
+      `;
 
       document.getElementById("backBtn").onclick = () => renderPostsMes(year, month);
 
@@ -360,29 +350,29 @@
 
         if (!text) {
           msg.style.color = "#8b0000";
-          msg.textContent = "El texto es obligatorio";
+          msg.textContent = "Text is required";
           return;
         }
         if (day < 1 || day > 31) {
           msg.style.color = "#8b0000";
-          msg.textContent = "Día inválido";
+          msg.textContent = "Invalid day";
           return;
         }
 
         msg.style.color = "#8b0000";
-        msg.textContent = "Subiendo publicación...";
+        msg.textContent = "Uploading post...";
 
         try {
           let imageUrl = "";
           if (imageFile) {
-            const imageRef = ref(storage, post_images/${Date.now()}_${imageFile.name});
+            const imageRef = ref(storage, `post_images/${Date.now()}_${imageFile.name}`);
             const snapshot = await uploadBytes(imageRef, imageFile);
             imageUrl = await getDownloadURL(snapshot.ref);
           }
 
           let videoUrl = "";
           if (videoFile) {
-            const videoRef = ref(storage, post_videos/${Date.now()}_${videoFile.name});
+            const videoRef = ref(storage, `post_videos/${Date.now()}_${videoFile.name}`);
             const snapshot = await uploadBytes(videoRef, videoFile);
             videoUrl = await getDownloadURL(snapshot.ref);
           }
@@ -398,21 +388,20 @@
           });
 
           msg.style.color = "green";
-          msg.textContent = "Publicación agregada con éxito.";
+          msg.textContent = "Post successfully added.";
           setTimeout(() => renderPostsMes(year, month), 1500);
 
         } catch (e) {
           msg.style.color = "#8b0000";
-          msg.textContent = "Error al crear publicación: " + e.message;
+          msg.textContent = "Error creating post: " + e.message;
         }
       };
     }
 
-    // --- Buscar por fecha desde inicio ---
     async function buscarPorFecha() {
       const year = parseInt(document.getElementById("searchYear").value);
       if (!year) {
-        alert("Ingresa al menos el año para buscar");
+        alert("Enter at least the year to search");
         return;
       }
       const month = parseInt(document.getElementById("searchMonth").value);
@@ -431,7 +420,7 @@
       }
 
       const postsContainer = document.getElementById("searchResults");
-      postsContainer.innerHTML = "Buscando publicaciones...";
+      postsContainer.innerHTML = "Searching posts...";
 
       try {
         const postsRef = collection(db, "posts");
@@ -442,33 +431,32 @@
         );
         const snapshot = await getDocs(q);
         if (snapshot.empty) {
-          postsContainer.textContent = "No se encontraron publicaciones para esa fecha.";
+          postsContainer.textContent = "No posts found for that date.";
           return;
         }
         postsContainer.innerHTML = "";
         snapshot.forEach(doc => {
           const p = doc.data();
           const date = p.date.toDate();
-          postsContainer.innerHTML += 
+          postsContainer.innerHTML += `
             <div class="post">
-              <strong>${date.getDate()} de ${monthName(date.getMonth()+1)} de ${date.getFullYear()}</strong><br/>
+              <strong>${date.getDate()} ${monthName(date.getMonth()+1)} ${date.getFullYear()}</strong><br/>
               <p>${escapeHtml(p.text)}</p>
-              ${p.imageUrl ? <img src="${p.imageUrl}" alt="imagen"/> : ""}
-              ${p.videoUrl ? <video src="${p.videoUrl}" controls></video> : ""}
-              <small>Publicado por: ${escapeHtml(p.author)}</small>
+              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="image"/>` : ""}
+              ${p.videoUrl ? `<video src="${p.videoUrl}" controls></video>` : ""}
+              <small>Posted by: ${escapeHtml(p.author)}</small>
             </div>
-          ;
+          `;
         });
       } catch(e) {
-        postsContainer.textContent = "Error buscando publicaciones: " + e.message;
+        postsContainer.textContent = "Error searching posts: " + e.message;
       }
     }
 
-    // --- Utils ---
     function monthName(m) {
-      const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-      return months[m-1] || "Mes inválido";
+      const months = ["January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"];
+      return months[m-1] || "Invalid month";
     }
 
     function escapeHtml(text) {
@@ -477,7 +465,6 @@
       return div.innerHTML;
     }
 
-    // --- Controlar estado de login ---
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if (user) {
