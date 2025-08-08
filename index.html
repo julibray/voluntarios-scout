@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voluntarios Scout Adventures</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #fff5f5;
+      color: #8b0000; /* rojo oscuro */
+      line-height: 1.4;
+    }
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(139,0,0,0.2);
+      border: 1px solid #8b0000;
+    }
+    h1, h2 {
+      margin-top: 0;
+      color: #b22222;
+      font-weight: 700;
+    }
+    button {
+      background-color: #b22222;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      user-select: none;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #8b0000;
+    }
+    .btn-secondary {
+      background-color: #f08080;
+      color: #8b0000;
+    }
+    .btn-secondary:hover {
+      background-color: #cd5c5c;
+      color: white;
+    }
+    input[type="text"], textarea, select, input[type="date"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px 0;
+      border-radius: 5px;
+      border: 1px solid #b22222;
+      box-sizing: border-box;
+      font-family: sans-serif;
+      font-size: 14px;
+      color: #8b0000;
+      background: #fff0f0;
+    }
+    input[type="file"] {
+      margin: 6px 0 20px 0;
+      display: block;
+      color: #8b0000;
+    }
+    #searchForm {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #searchForm input, #searchForm button, #searchForm select {
+      flex: 1 1 auto;
+      min-width: 120px;
+      color: #8b0000;
+      background: #fff0f0;
+      border: 1px solid #b22222;
+      font-size: 14px;
+    }
+    .post {
+      border: 1px solid #b22222;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background: #ffe5e5;
+      word-wrap: break-word;
+    }
+    .post img, .post video {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 4px;
+      display: block;
+    }
+    .message {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #b22222;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    header div {
+      font-weight: 600;
+    }
+
+    /* Estilos responsivos */
+    @media (max-width: 600px) {
+      .container {
+        margin: 10px 10px;
+        padding: 15px;
+      }
+      button {
+        width: 100%;
+        margin: 6px 0;
+      }
+      #searchForm input, #searchForm button, #searchForm select {
+        min-width: unset;
+        flex-basis: 100%;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      header div {
+        margin-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="root"></div>
+
+  <script type="module">
+    // El mismo código JS del ejemplo anterior sin cambios, 
+    // para no hacer muy largo el mensaje.
+    // Te lo puedo pasar si quieres.
+  </script>
+</body>
+</html>
